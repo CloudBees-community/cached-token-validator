@@ -33,6 +33,8 @@ class CachedTokenValidator extends TokenValidator {
     @Override
     public OauthToken validateToken(String token) throws OauthClientException {
         try {
+            if (token==null)    return null;
+
             CachedToken cache = this.cache.get(token);
             OauthToken t = cache.get();
             if(t==null || t.isExpired()){
