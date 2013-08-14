@@ -4,6 +4,7 @@ import com.cloudbees.api.oauth.OauthToken;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -18,7 +19,7 @@ final class CachedToken {
     CachedToken(OauthToken token) {
         this.token = token;
         if (token!=null)
-            expiration = System.currentTimeMillis()+token.getExpiresIn();
+            expiration = System.currentTimeMillis()+ TimeUnit.SECONDS.toMillis(token.getExpiresIn());
         else
             expiration = -1;
     }
@@ -26,7 +27,7 @@ final class CachedToken {
     public @CheckForNull OauthToken get() {
         if (token==null)    return null;
         OauthToken t = token.clone();
-        t.setExpiresIn(round(expiration - System.currentTimeMillis()));
+        t.setExpiresIn(round(TimeUnit.MICROSECONDS.toSeconds(expiration - System.currentTimeMillis())));
         return t;
     }
 
