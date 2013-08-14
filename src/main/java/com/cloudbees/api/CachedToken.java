@@ -17,7 +17,10 @@ final class CachedToken {
 
     CachedToken(OauthToken token) {
         this.token = token;
-        expiration = System.currentTimeMillis()+token.getExpiresIn();
+        if (token!=null)
+            expiration = System.currentTimeMillis()+token.getExpiresIn();
+        else
+            expiration = -1;
     }
 
     public @CheckForNull OauthToken get() {
