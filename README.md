@@ -37,6 +37,7 @@ To use this, add the following in your POM as a dependency:
       <artifactId>token-validator</artifactId>
       <classifier>tests</classifier>
       <version>1.0</version>
+      <scope>test</scope>
     </dependency>
 
 This class constructs `OauthToken` object just from the textual representation of the token
