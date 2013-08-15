@@ -8,7 +8,7 @@
   </parent>
 
   <artifactId>token-validator</artifactId>
-  <version>1.0</version>
+  <version>1.1-SNAPSHOT</version>
 
   <name>token-validator</name>
   <description>Cached token validation</description>
