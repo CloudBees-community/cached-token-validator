@@ -78,4 +78,12 @@ public abstract class TokenValidator {
     public static TokenValidator from(BeesClient bees) {
         return from(bees.getOauthClient());
     }
+
+    /**
+     * Creates a new {@link TokenValidator} that tries both this token validator and the specified token validator,
+     * in that order. If one can successfully validate a token, it'll be returned.
+     */
+    public TokenValidator or(TokenValidator that) {
+        return new CascadingTokenValidator(this,that);
+    }
 }
