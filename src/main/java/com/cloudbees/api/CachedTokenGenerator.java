@@ -11,6 +11,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.introspect.VisibilityChecker.Std;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 import static org.codehaus.jackson.annotate.JsonAutoDetect.Visibility.*;
@@ -30,32 +32,49 @@ class CachedTokenGenerator extends TokenGenerator {
     CachedTokenGenerator(CacheBuilder<Object,Object> cb, final TokenGenerator base) {
         cache = cb.build(new CacheLoader<String,CachedToken>() {
             @Override
-            public CachedToken load(String token) throws Exception {
-                return new CachedToken(base.createToken(unpack(token)));
+            public CachedToken load(String packed) throws Exception {
+                if (packed.startsWith(CREATE_TOKEN))
+                    return new CachedToken(base.createToken(unpackCreateToken(packed)));
+                if (packed.startsWith(CREATE_OAUTH_CLIENT_TOKEN))
+                    return new CachedToken(base.createOAuthClientToken(unpackOAuthClientToken(packed)));
+                throw new IllegalArgumentException(packed);
             }
         });
     }
 
     String pack(TokenRequest req) throws OauthClientException {
         try {
-            return MAPPER.writeValueAsString(req);
+            return CREATE_TOKEN + MAPPER.writeValueAsString(req);
         } catch (IOException e) {
             throw new OauthClientException("Failed to marshal TokenRequest",e);
         }
     }
 
-    TokenRequest unpack(String packed) throws OauthClientException {
+    TokenRequest unpackCreateToken(String packed) throws OauthClientException {
         try {
-            return MAPPER.readValue(packed,TokenRequest.class);
+            return MAPPER.readValue(packed.substring(CREATE_TOKEN.length()), TokenRequest.class);
         } catch (IOException e) {
             throw new OauthClientException("Failed to unmarshal TokenRequest",e);
         }
     }
 
+    private Collection<String> unpackOAuthClientToken(String packed) {
+        return Arrays.asList(packed.substring(CREATE_OAUTH_CLIENT_TOKEN.length()).split(" "));
+    }
+
     @Override
     public OauthToken createToken(TokenRequest tokenRequest) throws OauthClientException {
+        return compute(pack(tokenRequest));
+    }
+
+    @Override
+    public OauthToken createOAuthClientToken(Collection<String> scopes) throws OauthClientException {
+        String p = CREATE_OAUTH_CLIENT_TOKEN + StringUtils.join(scopes, " ");
+        return compute(p);
+    }
+
+    private OauthToken compute(String p) throws OauthClientException {
         try {
-            String p = pack(tokenRequest);
 
             OauthToken t = getFromCache(p);
             if (t==null) {
@@ -93,4 +112,6 @@ class CachedTokenGenerator extends TokenGenerator {
         MAPPER.getDeserializationConfig().set(Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
+    private static final String CREATE_TOKEN = "createToken:";
+    private static final String CREATE_OAUTH_CLIENT_TOKEN = "createOAuthClientToken:";
 }

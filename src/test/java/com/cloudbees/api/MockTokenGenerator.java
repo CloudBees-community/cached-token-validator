@@ -4,7 +4,9 @@ import com.cloudbees.api.oauth.OauthClientException;
 import com.cloudbees.api.oauth.OauthToken;
 import com.cloudbees.api.oauth.TokenRequest;
 
-import java.util.List;
+import java.util.Collection;
+
+import static com.cloudbees.api.StringUtils.*;
 
 /**
  * {@link TokenGenerator} for testing purpose.
@@ -18,20 +20,28 @@ import java.util.List;
  * @author Kohsuke Kawaguchi
  */
 public class MockTokenGenerator extends TokenGenerator {
+    private final String account;
+
+    /**
+     * @param account
+     *      {@link #createOAuthClientToken(Collection)} will generate tokens tied to this account.
+     *      In real Grand Central, this corresponds to the account under which the application is registered.
+     */
+    public MockTokenGenerator(String account) {
+        this.account = account;
+    }
+
     @Override
     public OauthToken createToken(TokenRequest r) throws OauthClientException {
         OauthToken t = new OauthToken();
-        t.accessToken = "account="+r.getAccountName()+",scope="+ join(r.getScopes()," ");
+        t.accessToken = "account="+r.getAccountName()+",scope="+ join(r.getScopes(), " ");
         return t;
     }
 
-    private String join(List<String> values, String delim) {
-        StringBuilder buf = new StringBuilder();
-        for (String value : values) {
-            if (buf.length()>0)
-                buf.append(delim);
-            buf.append(value);
-        }
-        return buf.toString();
+    @Override
+    public OauthToken createOAuthClientToken(Collection<String> scopes) throws OauthClientException {
+        OauthToken t = new OauthToken();
+        t.accessToken = "account="+account+",scope="+ join(scopes, " ");
+        return t;
     }
 }
