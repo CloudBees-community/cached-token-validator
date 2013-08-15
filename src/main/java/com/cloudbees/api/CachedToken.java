@@ -7,6 +7,8 @@ import javax.annotation.Nullable;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Cached {@link OauthToken} with accurate expiration tracking.
+ *
  * @author Kohsuke Kawaguchi
  */
 final class CachedToken {
@@ -15,13 +17,26 @@ final class CachedToken {
      */
     private final @Nullable OauthToken token;
     private final long expiration;
+    private final long halfExpiration;
 
     CachedToken(OauthToken token) {
         this.token = token;
-        if (token!=null)
-            expiration = System.currentTimeMillis()+ TimeUnit.SECONDS.toMillis(token.getExpiresIn());
-        else
-            expiration = -1;
+        if (token!=null) {
+            long now = System.currentTimeMillis();
+            long e = TimeUnit.SECONDS.toMillis(token.getExpiresIn());
+            expiration = now + e;
+            halfExpiration = now + e /2;
+        } else
+            expiration = halfExpiration = -1;
+    }
+
+    /**
+     * Returns true if half the life time of the token has elapsed
+     * since the token was obtained. This really only makes sense
+     * for caching token generation.
+     */
+    boolean isHalfExpired() {
+        return halfExpiration < System.currentTimeMillis();
     }
 
     public @CheckForNull OauthToken get() {
