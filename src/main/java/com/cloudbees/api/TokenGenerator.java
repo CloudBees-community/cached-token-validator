@@ -1,11 +1,14 @@
 package com.cloudbees.api;
 
+import com.cloudbees.api.cr.Credential;
 import com.cloudbees.api.oauth.OauthClient;
 import com.cloudbees.api.oauth.OauthClientException;
 import com.cloudbees.api.oauth.OauthToken;
 import com.cloudbees.api.oauth.TokenRequest;
 import com.google.common.cache.CacheBuilder;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -22,6 +25,40 @@ public abstract class TokenGenerator {
      * @throws OauthClientException if there is any error during token validation
      */
     public abstract OauthToken createToken(TokenRequest tokenRequest) throws OauthClientException;
+
+    /**
+     * Creates a {@link Credential} that will authenticate requests by creating a token according to
+     * the argument given.
+     *
+     * <p>
+     * This method works like {@code createToken(r).asCredential()}, in that it authenticates
+     * requests by a token. The key difference is that the token generation gets deferred until
+     * the request is actually made, and the {@link #createToken(TokenRequest)} gets called
+     * every time the authentication is necessary.
+     *
+     * <p>
+     * This is useful if you intend to use {@link Credential} for longer than the expiration of
+     * access token (which is 1 hour as of this writing). It is strongly advised that you do
+     * this with a cached {@link TokenGenerator}, if you are making requests frequently. Doing
+     * so will avoid the repeated REST calls to GC.
+     *
+     * @param r
+     *      The returned {@link Credential} object will hold the reference to this {@link TokenRequest}
+     *      in order to create tokens at a later point. Therefore once you pass a {@link TokenRequest}
+     *      to this method, do not change it.
+     */
+    public Credential asCredential(final TokenRequest r) {
+        return new Credential() {
+            @Override
+            public void authorizeRequest(HttpURLConnection con) throws IOException {
+                try {
+                    createToken(r).asCredential().authorizeRequest(con);
+                } catch (OauthClientException e) {
+                    throw (IOException)new IOException("Failed to authenticate the request").initCause(e);
+                }
+            }
+        };
+    }
 
     /**
      * OAuth client application can use this method to create an OAuth token with arbitrary scopes
