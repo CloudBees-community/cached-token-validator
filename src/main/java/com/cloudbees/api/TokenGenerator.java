@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.logging.Logger;
+
+import static java.util.logging.Level.FINE;
 
 /**
  * Base interface for various token generators.
@@ -106,11 +109,17 @@ public abstract class TokenGenerator {
         return new TokenGenerator() {
             @Override
             public OauthToken createToken(TokenRequest tokenRequest) throws OauthClientException {
+                if (LOGGER.isLoggable(FINE)) {
+                    LOGGER.log(FINE, "Creating a token: "+tokenRequest);
+                }
                 return client.createToken(tokenRequest);
             }
 
             @Override
             public OauthToken createOAuthClientToken(Collection<String> scopes) throws OauthClientException {
+                if (LOGGER.isLoggable(FINE)) {
+                    LOGGER.log(FINE, "Creating an OAuth client token: "+scopes);
+                }
                 return client.createOAuthClientToken(scopes);
             }
         };
@@ -119,4 +128,6 @@ public abstract class TokenGenerator {
     public static TokenGenerator from(BeesClient bees) {
         return from(bees.getOauthClient());
     }
+
+    private static final Logger LOGGER = Logger.getLogger(TokenGenerator.class.getName());
 }
