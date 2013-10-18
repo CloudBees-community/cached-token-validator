@@ -28,7 +28,7 @@ public class MockTokenValidator extends TokenValidator {
     public OauthToken validateToken(String token) throws OauthClientException {
 
         // cue to return null?
-        if (token.startsWith("invalid"))
+        if (token == null || token.startsWith("invalid"))
             return null;
 
         OauthToken oa = new OauthToken();
