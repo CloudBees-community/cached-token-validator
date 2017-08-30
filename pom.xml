@@ -8,7 +8,7 @@
   </parent>
 
   <artifactId>token-validator</artifactId>
-  <version>1.2-SNAPSHOT</version>
+  <version>1.2-beta-1</version>
 
   <name>token-validator</name>
   <description>Cached token validation</description>
@@ -67,5 +67,6 @@
     <connection>scm:git:git://github.com/CloudBees-community/cached-token-validator.git</connection>
     <developerConnection>scm:git:git@github.com:CloudBees-community/cached-token-validator.git</developerConnection>
     <url>https://github.com/CloudBees-community/cached-token-validator</url>
+    <tag>token-validator-1.2-beta-1</tag>
   </scm>
 </project>
